@@ -141,7 +141,7 @@ NOTES:
 int bitAnd(int x, int y) {
 
 
-  return ~(~x | ~y);
+  return ~(~x | ~y); 
 }
 /* 
  * getByte - Extract byte n from word x
@@ -153,10 +153,11 @@ int bitAnd(int x, int y) {
  */
 int getByte(int x, int n) {
 
-  
+  int mask = 0xFF;
+  n = n << 3;
+  x = x >> n;
+  return (x & mask);
 
-
-  return 2;
 
 }
 /* 

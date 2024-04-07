@@ -169,7 +169,11 @@ int getByte(int x, int n) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
-  return 2;
+  int logical_mask = ~(1 << 31 >> n << 1);
+
+  int art_shift = x >> n;
+  
+  return art_shift & logical_mask;
 }
 /*
  * bitCount - returns count of number of 1's in word

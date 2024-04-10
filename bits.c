@@ -183,7 +183,28 @@ int logicalShift(int x, int n) {
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+  int result = 0;
+  int mask = 0x55 | 0x55 << 8;
+  mask = mask | (mask << 16);
+  result = x & mask;
+  x = x >> 1;
+  result = result + (x & mask);
+  
+  mask = 0x33 | 0x33 << 8;
+  mask = mask | (mask << 16);
+  result = ((result >> 2) & mask) + (result & mask);
+
+  mask = 0x0F | 0x0F << 8;
+  mask = mask | (mask << 16);
+  result = ((result >> 4) & mask) + (result & mask);
+
+  mask = 0xFF | 0xFF << 16;
+  result = ((result >> 8) & mask) + (result & mask);
+
+  mask = 0xFF | 0xFF << 8;
+  result = ((result >> 16) & mask) + (result & mask);
+
+  return result;
 }
 /* 
  * bang - Compute !x without using !
@@ -193,7 +214,12 @@ int bitCount(int x) {
  *   Rating: 4 
  */
 int bang(int x) {
-  return 2;
+  x = x | (x >> 16);
+  x = x | (x >> 8);
+  x = x | (x >> 4);
+  x = x | (x >> 2);
+  x = x | (x >> 1);
+  return (~x) & 1;
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -202,7 +228,7 @@ int bang(int x) {
  *   Rating: 1
  */
 int tmin(void) {
-  return 2;
+  return 1 << 31;
 }
 /* 
  * fitsBits - return 1 if x can be represented as an 
@@ -214,7 +240,10 @@ int tmin(void) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+  int shift = (1 << (n + ~0));
+  int shifted = x >> 31;
+  return !(((x^shifted) + shift) >> n);
+
 }
 /* 
  * divpwr2 - Compute x/(2^n), for 0 <= n <= 30

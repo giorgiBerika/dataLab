@@ -254,7 +254,9 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-    return 2;
+    int sign = x >> 31;
+    int blas = (sign & ((1 << n) + ~0)); 
+    return (x + blas) >> n;
 }
 /* 
  * negate - return -x 
@@ -264,7 +266,7 @@ int divpwr2(int x, int n) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x+1;
 }
 /* 
  * isPositive - return 1 if x > 0, return 0 otherwise 
@@ -274,7 +276,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return 2;
+  return !((x>>31) | !x);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -284,7 +286,14 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int opp_pol = ((x ^ y) >>31);
+
+  int x_neg = x >> 31;
+
+  int diff = (~ ((y + (~x + 1)) >> 31));
+
+  return (!!(x_neg & opp_pol)) | (!!(diff&(~opp_pol)));
+
 }
 /*
  * ilog2 - return floor(log base 2 of x), where x > 0
@@ -294,7 +303,22 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return 2;
+  int result = 0;
+
+  result += ((!!(x >> 16)))<<4;
+  x >>= result;
+
+  result += (!!(x>>8)) << 3;
+  x >>= result & 8;
+
+  result += (!!(x >> 4))<<2;
+  x >>= result&4;
+
+  result += (!!(x>>2)) << 1;
+  x >>= result&2;
+
+  result += !!(x >> 1);
+  return result;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for
@@ -308,7 +332,11 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+
+  if (((uf >> 23) & 0xFF) == 0xFF && (uf & 0x7FFFFF) != 0){
+    return uf;
+  };
+ return uf ^ 0x80000000;
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -320,7 +348,25 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+  int e = 158;
+    int mask = 1 << 31;
+    int sign = x & mask;
+    int frac;
+    if (x == mask)
+      return mask | (158 << 23);
+    if (!x)
+      return 0;
+    if (sign)
+      x = ~x + 1;
+    while (!(x&mask)) {
+      x = x << 1;
+      e = e -1;
+    }
+    frac = (x&(~mask)) >> 8;
+    if (x&0x80 && ((x&0x7F) > 0 || frac&1))
+      frac = frac + 1;
+
+    return sign + (e<<23) + frac;
 }
 /* 
  * float_twice - Return bit-level equivalent of expression 2*f for
@@ -334,5 +380,24 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+  int e = (uf >> 23) & 0xFF;
+  if (!e)
+  {
+    e = 0xFF;
+    uf = (uf & 0x80000000) | (uf << 1);
+
+  }
+  if (!(e ^ 0xFE))
+  {
+    e = 0xFF;
+
+    uf = (uf & 0x80000000) | (e << 23);
+
+  }
+  if (e ^ 0xFF)
+  {
+    uf = uf + ( 1<< 23);
+  }
+
+  return uf;
 }
